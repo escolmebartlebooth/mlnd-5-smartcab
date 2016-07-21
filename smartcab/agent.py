@@ -11,10 +11,16 @@ class LearningAgent(Agent):
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
         # TODO: Initialize any additional variables here
+        
+        # override state variable initialised to None as empty dictionary
+        self.state = {}
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
+
+        # reset state variable initialised to empty dictionary
+        self.state = {}
 
     def update(self, t):
         # Gather inputs
@@ -23,6 +29,16 @@ class LearningAgent(Agent):
         deadline = self.env.get_deadline(self)
 
         # TODO: Update state
+        # initial view of state takes all inputs
+        self.state['heading'] = self.env.agent_states[self]['heading']
+        self.state['location'] = self.env.agent_states[self]['location']
+        self.state['destination'] = self.env.agent_states[self]['destination']
+        self.state['light'] = inputs['light']
+        self.state['left'] = inputs['left']
+        self.state['right'] = inputs['right']
+        self.state['oncoming'] = inputs['oncoming']
+        
+        print self.state
         
         # TODO: Select action according to your policy
         action = None
@@ -40,7 +56,7 @@ def run():
     """Run the agent for a finite number of trials."""
     
     # create common place to set debug values
-    dbg_deadline = False
+    dbg_deadline = True
     dbg_update_delay = 0.5
     dbg_display = False
     dbg_trials = 1
