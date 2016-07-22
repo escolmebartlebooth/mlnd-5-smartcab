@@ -3,6 +3,36 @@ from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
 
+class QLearner(object):
+    """A Q-learning object"""
+    
+    def __init__(self):
+        self.learningRate = 0.2
+        self.discountRate = 0.9
+        self.epsilon = 0.1
+        self.qTable = []
+    
+    def reset():
+        self.learningRate = 0.2
+        self.discountRate = 0.9
+        self.epsilon = 0.1
+        self.qTable = []
+    
+    def update(state,action,reward,newstate):
+        pass
+    
+    def getAction(self,state):
+        # should select best action based on greedy epsilon etc
+        # if random action, choose random else choose best
+        if random.randint(0,9) > (self.epsilon*10):
+            # pick best
+            return None
+        else:
+            # pick random
+            return None
+        
+        
+
 class LearningAgent(Agent):
     """An agent that learns to drive in the smartcab world."""
 
@@ -14,6 +44,8 @@ class LearningAgent(Agent):
         
         # override state variable initialised to None as empty dictionary
         self.state = {}
+        # create a q-learner
+        self.qLearner = QLearner()
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
@@ -21,6 +53,8 @@ class LearningAgent(Agent):
 
         # reset state variable initialised to empty dictionary
         self.state = {}
+        # reset the qlearner
+        self.qLearner.reset
 
     def update(self, t):
         # Gather inputs
@@ -42,6 +76,7 @@ class LearningAgent(Agent):
         
         # TODO: Select action according to your policy
         action = None
+        action = self.qLearner.getAction(self.state)
         # update action to be a random choice
         action = random.choice(self.env.valid_actions)
         # Execute action and get reward
