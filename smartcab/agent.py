@@ -18,7 +18,7 @@ class QLearner(object):
         self.epsilon = 0.1
         self.qTable = []
     
-    def update(state,action,reward,newstate):
+    def update(self,state,action,reward,newstate):
         pass
     
     def getAction(self,state):
@@ -55,6 +55,16 @@ class LearningAgent(Agent):
         self.state = {}
         # reset the qlearner
         self.qLearner.reset
+        
+    def set_State(self,inputs):
+        # set state based on these things...
+        self.state['heading'] = self.env.agent_states[self]['heading']
+        self.state['location'] = self.env.agent_states[self]['location']
+        self.state['destination'] = self.env.agent_states[self]['destination']
+        self.state['light'] = inputs['light']
+        self.state['left'] = inputs['left']
+        self.state['right'] = inputs['right']
+        self.state['oncoming'] = inputs['oncoming']
 
     def update(self, t):
         # Gather inputs
@@ -64,13 +74,7 @@ class LearningAgent(Agent):
 
         # TODO: Update state
         # initial view of state takes all inputs
-        self.state['heading'] = self.env.agent_states[self]['heading']
-        self.state['location'] = self.env.agent_states[self]['location']
-        self.state['destination'] = self.env.agent_states[self]['destination']
-        self.state['light'] = inputs['light']
-        self.state['left'] = inputs['left']
-        self.state['right'] = inputs['right']
-        self.state['oncoming'] = inputs['oncoming']
+        self.set_State(inputs)
         
         print self.state
         
@@ -83,6 +87,10 @@ class LearningAgent(Agent):
         reward = self.env.act(self, action)
 
         # TODO: Learn policy based on state, action, reward
+        inputs = self.env.sense(self)
+        oldstate = self.state
+        self.set_State(inputs)
+        self.qLearner.update(oldstate,action,reward,self.state)
 
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
