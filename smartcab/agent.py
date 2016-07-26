@@ -121,7 +121,8 @@ class LearningAgent(Agent):
 
         # TODO: Update state
         # initial view of state takes all inputs
-        self.state = (self.next_waypoint,inputs['light'],inputs['left'],inputs['right'],inputs['oncoming'])
+        # 26-07: Update to remove right as it doesn't add value
+        self.state = (self.next_waypoint,inputs['light'],inputs['left'],inputs['oncoming'])
         
         print self.state
         
