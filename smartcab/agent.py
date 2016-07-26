@@ -9,7 +9,7 @@ class QLearner(object):
     def __init__(self):
         self.learningRate = 0.2
         self.discountRate = 0.9
-        self.epsilon = 0.1
+        self.epsilon = 0.5
         self.qTable = {}
         self.previous_state = ()
         self.previous_action = None
@@ -18,11 +18,11 @@ class QLearner(object):
     def reset():
         self.learningRate = 0.2
         self.discountRate = 0.9
-        self.epsilon = 0.1
+        self.epsilon = 0.5
         # don't reset qtable as it needs to learn...?
-        self.previous_state = ()
-        self.previous_action = None
-        self.previous_reward = 0
+        #self.previous_state = ()
+        #self.previous_action = None
+        #self.previous_reward = 0
     
     def update(self,state,action,reward):
         # first time through
@@ -64,14 +64,15 @@ class QLearner(object):
         # using the 2 Q values and other params, calc new Q(s,a) using:
         # (1-alpha)*Q(s,a)+alpha * [reward + gamma * Qmax(s',a')]
         # update q table with that value
-        pass
     
     def get_action(self,state):
         # should select best action based on greedy epsilon etc
         # if random action, choose random else choose best
-        if random.randint(0,9) > (self.epsilon*10):
+        if random.randint(0,10) > (self.epsilon*10):
+            print 'USING BEST'
             # pick best
             if state in self.qTable:
+                print 'state present'
                 # get best action if any present
                 # do this by iterating the actions dictionary assoicated with the state key and returning max value
                 maxkey = None
@@ -83,10 +84,10 @@ class QLearner(object):
                 return maxkey
             else:
                 # state not in qTable so return None
-                return None
+                return 'random'
         else:
             # pick random triggered by epsilon
-            return None
+            return 'random'
         
         
 
@@ -107,10 +108,9 @@ class LearningAgent(Agent):
     def reset(self, destination=None):
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
-
         # reset state variable initialised to empty tuple
         self.state = ()
-        # don't reset the qlearner as it learns over time
+        # don't reset the qlearner as it learns over each trial
         # self.qLearner.reset
         
     def update(self, t):
@@ -130,8 +130,8 @@ class LearningAgent(Agent):
         action = None
         action = self.q_learner.get_action(self.state)
         # update action to be a random choice
-        if action is None:
-            # qtable returned none, so choose random 
+        if action == 'random':
+            # qtable returned random choice, so choose random 
             action = random.choice(self.env.valid_actions)
         # Execute action and get reward
         reward = self.env.act(self, action)
@@ -150,7 +150,7 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.5
     dbg_display = False
-    dbg_trials = 1
+    dbg_trials = 2
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
