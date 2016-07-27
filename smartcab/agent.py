@@ -7,24 +7,25 @@ class QLearner(object):
     """A Q-learning object"""
     
     def __init__(self):
-        self.learningRate = 0.2
+        self.learningRate = 1
         self.discountRate = 0.9
-        self.epsilon = 0.5
+        self.epsilon = 1
         self.qTable = {}
         self.previous_state = ()
         self.previous_action = None
         self.previous_reward = 0
+        self.step = 0
     
     def reset():
-        self.learningRate = 0.2
-        self.discountRate = 0.9
-        self.epsilon = 0.5
+        pass
         # don't reset qtable as it needs to learn...?
         #self.previous_state = ()
         #self.previous_action = None
         #self.previous_reward = 0
     
     def update(self,state,action,reward):
+        # update learning rate
+        self.learningRate = 1.0 / self.step
         # first time through
         if len(self.previous_state) <> 0:
             # if the state is not in the qtable, add it to table with zero values
@@ -40,11 +41,9 @@ class QLearner(object):
                     if state not in self.qTable:
                         mqsa = 0
                     else:
-                        maxkey = None
                         mqsa = 0
                         for key in self.qTable[state]:
                             if self.qTable[state][key] > mqsa:
-                                maxkey = key
                                 mqsa = self.qTable[state][key]
                     # now we have qsa and mqsa we can learn
                     qsa = (1-self.learningRate)*qsa
@@ -68,6 +67,8 @@ class QLearner(object):
     def get_action(self,state):
         # should select best action based on greedy epsilon etc
         # if random action, choose random else choose best
+        # update epsilon
+        self.epsilon = 1.0 / self.step
         if random.randint(0,10) > (self.epsilon*10):
             print 'USING BEST'
             # pick best
@@ -128,6 +129,7 @@ class LearningAgent(Agent):
         print self.state
         
         # TODO: Select action according to your policy
+        self.q_learner.step = self.q_learner.step + 1
         action = None
         action = self.q_learner.get_action(self.state)
         # update action to be a random choice
@@ -150,8 +152,8 @@ def run():
     # create common place to set debug values
     dbg_deadline = True
     dbg_update_delay = 0.1
-    dbg_display = True
-    dbg_trials = 100
+    dbg_display = False
+    dbg_trials = 10
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
