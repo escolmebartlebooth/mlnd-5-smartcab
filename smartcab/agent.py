@@ -122,7 +122,8 @@ class LearningAgent(Agent):
         # TODO: Update state
         # initial view of state takes all inputs
         # 26-07: Update to remove right as it doesn't add value
-        self.state = (self.next_waypoint,inputs['light'],inputs['left'],inputs['oncoming'])
+        # 27-07: removed all cars input to reduce state space
+        self.state = (self.next_waypoint,inputs['light'])
         
         print self.state
         
@@ -148,9 +149,9 @@ def run():
     
     # create common place to set debug values
     dbg_deadline = True
-    dbg_update_delay = 0.5
-    dbg_display = False
-    dbg_trials = 2
+    dbg_update_delay = 0.1
+    dbg_display = True
+    dbg_trials = 100
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
@@ -165,6 +166,7 @@ def run():
     sim.run(n_trials=dbg_trials)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
+    print a.q_learner.qTable
 
 if __name__ == '__main__':
     run()
