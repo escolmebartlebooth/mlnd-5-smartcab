@@ -70,10 +70,8 @@ class QLearner(object):
         # update epsilon
         self.epsilon = 1.0 / self.step
         if random.randint(0,10) > (self.epsilon*10):
-            print 'USING BEST'
             # pick best
             if state in self.qTable:
-                print 'state present'
                 # get best action if any present
                 # do this by iterating the actions dictionary assoicated with the state key and returning max value
                 maxkey = None
@@ -100,7 +98,9 @@ class LearningAgent(Agent):
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
         # TODO: Initialize any additional variables here
-        
+        # set a run type to allow for different states
+        # this should be overridden in run()
+        self.run_type = 'random'
         # override state variable initialised to None as empty tuple
         self.state = ()
         # create a q-learner
@@ -124,14 +124,22 @@ class LearningAgent(Agent):
         # initial view of state takes all inputs
         # 26-07: Update to remove right as it doesn't add value
         # 27-07: removed all cars input to reduce state space
-        self.state = (self.next_waypoint,inputs['light'])
-        
-        print self.state
+        if self.run_type == 'random':
+            self.state = (self.next_waypoint,inputs['light'])
+        elif self.run_type == 'way_light_only':
+            self.state = (self.next_waypoint,inputs['light'])
+        else:
+            self.state = (self.next_waypoint,inputs['light'],inputs['oncoming'],inputs['left'],inputs['right'])
         
         # TODO: Select action according to your policy
-        self.q_learner.step = self.q_learner.step + 1
+        # if run_type = 'random' don't use q_learner and set action to random...
         action = None
-        action = self.q_learner.get_action(self.state)
+        if self.run_type == 'random':
+            action = 'random'
+        else:
+            self.q_learner.step = self.q_learner.step + 1
+            action = self.q_learner.get_action(self.state)
+            
         # update action to be a random choice
         if action == 'random':
             # qtable returned random choice, so choose random 
@@ -140,8 +148,9 @@ class LearningAgent(Agent):
         reward = self.env.act(self, action)
 
         # TODO: Learn policy based on state, action, reward
-        # learn one step in arrears
-        self.q_learner.update(self.state,action,reward)
+        # learn one step in arrears - assuming not a random run
+        if self.run_type != 'random':
+            self.q_learner.update(self.state,action,reward)
         
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
@@ -150,14 +159,18 @@ def run():
     """Run the agent for a finite number of trials."""
     
     # create common place to set debug values
-    dbg_deadline = True
-    dbg_update_delay = 0.1
-    dbg_display = False
-    dbg_trials = 10
+    dbg_deadline = False
+    dbg_update_delay = 0.5
+    dbg_display = True
+    dbg_trials = 2
+    # create switches to run as random, state1, state2
+    dbg_runtype = 'random'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
     a = e.create_agent(LearningAgent)  # create agent
+    # set the run type (random choice, simple state, state with vehicles)
+    a.run_type = dbg_runtype
     e.set_primary_agent(a, enforce_deadline=dbg_deadline)  # specify agent to track
     # NOTE: You can set enforce_deadline=False while debugging to allow longer trials
 
