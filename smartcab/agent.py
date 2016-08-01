@@ -18,17 +18,20 @@ class QLearner(object):
         self.previous_action = None
         self.previous_reward = 0
         
-        # initialise step counter for use in decaying parameters
+        # initialise step counters for use in decaying parameters
         self.step = 0
+        self.trial = 0
+        self.results_table = []
     
-    def reset():
-        pass
+    def reset(self, deadline, reward):
+        self.trial = self.trial + 1
+        self.results_table.append([self.trial - 1, deadline, reward ])
         # don't reset qtable as it needs to learn over all trials
         
     
     def update(self,state,action,reward):
         # update learning rate
-        self.learning_rate = 1.0 / self.step
+        self.learning_rate = 1.0 / self.trial
         
         if len(self.previous_state) <> 0:
             # if previous state has been initialised
@@ -68,9 +71,9 @@ class QLearner(object):
         # if random action, choose random else choose best
     
         # update epsilon
-        self.epsilon = 1.0 / self.step
+        self.epsilon = 1.0 / self.trial
 
-        if random.randint(0,10) > (self.epsilon*1000):
+        if (random.random() < self.epsilon):
             # pick best
             if (state in self.q_table):
                 # get best action if any present
@@ -109,6 +112,9 @@ class LearningAgent(Agent):
 
         # create a q-learner class
         self.q_learner = QLearner()
+        self.q_learner.trial = 1
+        self.last_reward = 0
+        self.last_deadline = 0
         
 
     def reset(self, destination=None):
@@ -117,8 +123,9 @@ class LearningAgent(Agent):
         
         # reset state variable initialised to empty tuple for each initial step of a trial
         self.state = ()
-        # don't reset the qlearner as it learns over each trial
         
+        # reset the qlearner as it learns over each trial
+        self.q_learner.reset(self.last_deadline, self.last_reward)
        
         
     def update(self, t):
@@ -128,6 +135,7 @@ class LearningAgent(Agent):
         deadline = self.env.get_deadline(self)
 
         # TODO: Update state
+        self.last_deadline = deadline
 
         # switch to allow for running in different states
         if self.run_type == 'random':
@@ -157,6 +165,7 @@ class LearningAgent(Agent):
             
         # Execute action and get reward
         reward = self.env.act(self, action)
+        self.last_reward = reward
 
         # TODO: Learn policy based on state, action, reward
 
@@ -172,9 +181,9 @@ def run():
     
     # create common place to set debug values
     dbg_deadline = True
-    dbg_update_delay = 0.1
+    dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 1
+    dbg_trials = 100
     # create switches to run as random, state1, state2
     dbg_runtype = 'way_light_vehicles'
 
@@ -194,6 +203,7 @@ def run():
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
     print a.q_learner.q_table
+    print a.q_learner.results_table
 
 if __name__ == '__main__':
     run()
