@@ -33,34 +33,31 @@ class QLearner(object):
         # update learning rate
         self.learning_rate = 1.0 / self.trial
         
+        # initialise state action pairs if not in qtable
+        if (state not in self.q_table):
+            self.q_table[state] = {action : 0}
+        elif (action not in self.q_table[state]):
+            self.q_table[state][action] = 0
+        
         if len(self.previous_state) <> 0:
             # if previous state has been initialised
-            if (self.previous_state not in self.q_table):
-                # if the state is not in the qtable, add it to table with zero values
-                self.q_table[self.previous_state] = {self.previous_action : 0}
-            else:
-                if (self.previous_action not in self.q_table[self.previous_state]):
-                    # if the state is present but the action isn't add the action
-                    self.q_table[self.previous_state][self.previous_action] = self.previous_reward
-                else:
-                    # capture q(s,a) from table
-                    qsa = self.q_table[self.previous_state][self.previous_action]
-                    if (state not in self.q_table):
-                        # if new state isn't in q table, set the q(s',a') to zero
-                        mqsa = 0
-                    else:
-                        # otherwise get the maximal q(s',a')
-                        mqsa = 0
-                        for key in self.q_table[state]:
-                            if (self.q_table[state][key] > mqsa):
-                                mqsa = self.q_table[state][key]
-                    # now we have qsa and mqsa we can learn
-                    # (1-alpha)*Q(s,a)+alpha * [reward + gamma * Qmax(s',a')]
-                    qsa = (1-self.learning_rate)*qsa
-                    discounted_rate = reward + (self.discount_rate * mqsa)
-                    qsa = qsa + (self.learning_rate * discounted_rate)
-                    # update q Table with new estimate for q(s,a)
-                    self.q_table[self.previous_state][self.previous_action] = qsa
+            # can assume states in q table from above with initial values
+            # capture q(s,a) from table
+            qsa = self.q_table[self.previous_state][self.previous_action]
+            
+            mqsa = 0
+            for key in self.q_table[state]:
+                if (self.q_table[state][key] > mqsa):
+                    mqsa = self.q_table[state][key]
+                    
+            # now we have qsa and mqsa we can learn
+            # (1-alpha)*Q(s,a)+alpha * [reward + gamma * Qmax(s',a')]
+            qsa = (1-self.learning_rate)*qsa
+            discounted_rate = self.previous_reward + (self.discount_rate * mqsa)
+            qsa = qsa + (self.learning_rate * discounted_rate)
+            # update q Table with new estimate for q(s,a)
+            self.q_table[self.previous_state][self.previous_action] = qsa
+        
         # update previous state, action, reward for next pass
         self.previous_state = state
         self.previous_action = action
@@ -185,7 +182,7 @@ def run():
     dbg_display = False
     dbg_trials = 100
     # create switches to run as random, state1, state2
-    dbg_runtype = 'way_light_vehicles'
+    dbg_runtype = 'way_light_only'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
