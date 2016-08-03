@@ -69,8 +69,9 @@ class QLearner(object):
     
         # update epsilon
         self.epsilon = 1.0 / self.trial
+        print "Epsilon updated to {}, on trial {}, at step {}".format(self.epsilon,self.trial,self.step)
 
-        if (random.random() < self.epsilon):
+        if (random.random() > self.epsilon):
             # pick best
             if (state in self.q_table):
                 # get best action if any present
@@ -79,7 +80,7 @@ class QLearner(object):
                 max_qsa_value = 0
                 for key in self.q_table[state]:
                     if self.q_table[state][key] > max_qsa_value:
-                        max_key_vaue = key
+                        max_key_value = key
                         max_qsa_value = self.q_table[state][key]
                 return max_key_value
             else:
@@ -182,7 +183,7 @@ def run():
     dbg_display = False
     dbg_trials = 100
     # create switches to run as random, state1, state2
-    dbg_runtype = 'way_light_only'
+    dbg_runtype = 'way_light_vehicles'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
