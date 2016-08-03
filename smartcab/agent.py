@@ -21,11 +21,9 @@ class QLearner(object):
         # initialise step counters for use in decaying parameters
         self.step = 0
         self.trial = 0
-        self.results_table = []
     
-    def reset(self, deadline, reward):
+    def reset(self):
         self.trial = self.trial + 1
-        self.results_table.append([self.trial - 1, deadline, reward ])
         # don't reset qtable as it needs to learn over all trials
         
     
@@ -69,8 +67,7 @@ class QLearner(object):
     
         # update epsilon
         self.epsilon = 1.0 / self.trial
-        print "Epsilon updated to {}, on trial {}, at step {}".format(self.epsilon,self.trial,self.step)
-
+        
         if (random.random() > self.epsilon):
             # pick best
             if (state in self.q_table):
@@ -110,10 +107,6 @@ class LearningAgent(Agent):
 
         # create a q-learner class
         self.q_learner = QLearner()
-        self.q_learner.trial = 1
-        self.last_reward = 0
-        self.last_deadline = 0
-        
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
@@ -123,7 +116,7 @@ class LearningAgent(Agent):
         self.state = ()
         
         # reset the qlearner as it learns over each trial
-        self.q_learner.reset(self.last_deadline, self.last_reward)
+        self.q_learner.reset()
        
         
     def update(self, t):
@@ -133,7 +126,6 @@ class LearningAgent(Agent):
         deadline = self.env.get_deadline(self)
 
         # TODO: Update state
-        self.last_deadline = deadline
 
         # switch to allow for running in different states
         if self.run_type == 'random':
@@ -163,7 +155,6 @@ class LearningAgent(Agent):
             
         # Execute action and get reward
         reward = self.env.act(self, action)
-        self.last_reward = reward
 
         # TODO: Learn policy based on state, action, reward
 
@@ -201,7 +192,6 @@ def run():
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
     print a.q_learner.q_table
-    print a.q_learner.results_table
 
 if __name__ == '__main__':
     run()
