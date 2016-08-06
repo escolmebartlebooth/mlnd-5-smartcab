@@ -3,13 +3,17 @@ from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
 
+# import numpy and matplotlib for results
+import numpy as np
+from matplotlib import pyplot as plt
+
 class QLearner(object):
     """A Q-learning object"""
     
     def __init__(self):
         # initialise learning parameters
         self.learning_rate = 1
-        self.discount_rate = 0.9
+        self.discount_rate = 0.5
         self.epsilon = 1
         
         # initialise q table and state, action, reward trackers
@@ -21,15 +25,23 @@ class QLearner(object):
         # initialise step counters for use in decaying parameters
         self.step = 0
         self.trial = 0
+        
+         # create a table to log results
+        self.results_table = None
     
-    def reset(self):
+    def reset(self,t):
+        # update results table
+        if (self.results_table == None):
+            self.results_table = [[self.trial,t,self.previous_reward]]
+        else:
+            self.results_table.append([self.trial,t,self.previous_reward])
+
         self.trial = self.trial + 1
         # don't reset qtable as it needs to learn over all trials
         
-    
     def update(self,state,action,reward):
         # update learning rate
-        self.learning_rate = 1.0 / self.trial
+        self.learning_rate = 1.0 / self.step
         
         # initialise state action pairs if not in qtable
         if (state not in self.q_table):
@@ -107,6 +119,9 @@ class LearningAgent(Agent):
 
         # create a q-learner class
         self.q_learner = QLearner()
+        
+        # track steps
+        self.step_count = 0
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
@@ -116,7 +131,7 @@ class LearningAgent(Agent):
         self.state = ()
         
         # reset the qlearner as it learns over each trial
-        self.q_learner.reset()
+        self.q_learner.reset(self.step_count)
        
         
     def update(self, t):
@@ -126,6 +141,7 @@ class LearningAgent(Agent):
         deadline = self.env.get_deadline(self)
 
         # TODO: Update state
+        self.step_count = t
 
         # switch to allow for running in different states
         if self.run_type == 'random':
@@ -134,10 +150,28 @@ class LearningAgent(Agent):
         elif self.run_type == 'way_light_only':
             # if way_light_only then combine traffic light and way point
             self.state = (self.next_waypoint,inputs['light'])
-        else:
-            # otherwise incorporate the vehicle states at the intersection
+        elif self.run_type == 'way_light_vehicles':
+            # incorporate the vehicle states at the intersection
             self.state = (self.next_waypoint,inputs['light'],inputs['oncoming'],inputs['left'],inputs['right'])
-        
+        else:
+            # otherwise do a combined state to reflect possible safe moves
+            # state definition is waypoint + allowed turn true false for left, right, forward            
+            if (inputs['light'] == "red"):
+                # lights are red so just check left car state
+                if (inputs['left'] == "forward"):
+                    # lights are red and turn right is not possible
+                    self.state = (self.next_waypoint,False,False,False)
+                else:
+                    # can turn right
+                    self.state = (self.next_waypoint,False,True,False)
+            else:
+                # lights are green so more options
+                # don't need to consider cars from left or right
+                turn_left = True
+                if (inputs['oncoming'] == "forward"
+                  or inputs['oncoming'] == "right"):
+                    turn_left = False
+                self.state = (self.next_waypoint,turn_left,True,True)
         # TODO: Select action according to your policy
         
         action = None
@@ -162,7 +196,7 @@ class LearningAgent(Agent):
         if self.run_type != 'random':
             self.q_learner.update(self.state,action,reward)
             
-        print "LearningAgent.update(): way_point = {}, deadline = {}, inputs = {}, action = {}, reward = {}".format(self.next_waypoint,deadline, inputs, action, reward)  # [debug]
+        # print "LearningAgent.update(): way_point = {}, deadline = {}, inputs = {}, action = {}, reward = {}".format(self.next_waypoint,deadline, inputs, action, reward)  # [debug]
 
 
 def run():
@@ -173,8 +207,9 @@ def run():
     dbg_update_delay = 0.01
     dbg_display = False
     dbg_trials = 100
-    # create switches to run as random, state1, state2
-    dbg_runtype = 'way_light_vehicles'
+    
+    # create switches to run as random, way_light, way_light_vehicles
+    dbg_runtype = 'way_light_modified'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
@@ -192,6 +227,11 @@ def run():
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
     print a.q_learner.q_table
+    out_array = np.array(a.q_learner.results_table)
+    y = out_array[:,1]
+    x = out_array[:,0]
+    plt.plot(x,y)
+    plt.show()
 
 if __name__ == '__main__':
     run()
