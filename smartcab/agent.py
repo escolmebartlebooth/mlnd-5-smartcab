@@ -28,20 +28,28 @@ class QLearner(object):
         
          # create a table to log results
         self.results_table = None
+        self.negative_rewards = 0
     
     def reset(self,t):
         # update results table
         if (self.results_table == None):
-            self.results_table = [[self.trial,t,self.previous_reward]]
+            self.results_table = [[self.trial,t,self.previous_reward,self.negative_rewards]]
         else:
-            self.results_table.append([self.trial,t,self.previous_reward])
+            self.results_table.append([self.trial,t,self.previous_reward,self.negative_rewards])
 
         self.trial = self.trial + 1
+        
+        # reset negative rewards counter
+        self.negative_rewards = 0
         # don't reset qtable as it needs to learn over all trials
         
     def update(self,state,action,reward):
         # update learning rate
         self.learning_rate = 1.0 / self.step
+        
+        # if reward is negative increment trial counter
+        if (reward <0):
+            self.negative_rewards += 1
         
         # initialise state action pairs if not in qtable
         if (state not in self.q_table):
@@ -206,10 +214,10 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 10
+    dbg_trials = 100
     
     # create switches to run as random, way_light, way_light_vehicles
-    dbg_runtype = 'way_light_modified'
+    dbg_runtype = 'random'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
@@ -230,7 +238,7 @@ def run():
     
     out_array = np.array(a.q_learner.results_table)   
     print np.size(out_array[np.where(out_array[:,2] > 3)],0)
-    y = out_array[:,1]
+    y = out_array[:,3]
     x = out_array[:,0]
     plt.plot(x,y)
     plt.show()
