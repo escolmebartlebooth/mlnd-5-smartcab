@@ -206,7 +206,7 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 100
+    dbg_trials = 10
     
     # create switches to run as random, way_light, way_light_vehicles
     dbg_runtype = 'way_light_modified'
@@ -227,7 +227,9 @@ def run():
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
     print a.q_learner.q_table
-    out_array = np.array(a.q_learner.results_table)
+    
+    out_array = np.array(a.q_learner.results_table)   
+    print np.size(out_array[np.where(out_array[:,2] > 3)],0)
     y = out_array[:,1]
     x = out_array[:,0]
     plt.plot(x,y)
