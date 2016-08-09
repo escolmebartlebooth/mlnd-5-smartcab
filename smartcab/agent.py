@@ -29,6 +29,7 @@ class QLearner(object):
          # create a table to log results
         self.results_table = None
         self.negative_rewards = 0
+        self.net_rewards = 0
     
     def reset(self,t):
         # update results table
@@ -39,8 +40,9 @@ class QLearner(object):
 
         self.trial = self.trial + 1
         
-        # reset negative rewards counter
+        # reset negative and net rewards counter
         self.negative_rewards = 0
+        self.net_rewards = 0
         # don't reset qtable as it needs to learn over all trials
         
     def update(self,state,action,reward):
@@ -50,6 +52,9 @@ class QLearner(object):
         # if reward is negative increment trial counter
         if (reward <0):
             self.negative_rewards += 1
+        
+        # increment net rewards for trial
+        self.net_rewards = self.net_rewards + reward
         
         # initialise state action pairs if not in qtable
         if (state not in self.q_table):
@@ -88,7 +93,7 @@ class QLearner(object):
         # update epsilon
         self.epsilon = 1.0 / self.trial
         
-        if (random.random() > self.epsilon):
+        if (random.random() > self.epsilon or state == None):
             # pick best
             if (state in self.q_table):
                 # get best action if any present
@@ -180,16 +185,15 @@ class LearningAgent(Agent):
                   or inputs['oncoming'] == "right"):
                     turn_left = False
                 self.state = (self.next_waypoint,turn_left,True,True)
+        
         # TODO: Select action according to your policy
         
+        # set action to None as a default
         action = None
-        if self.run_type == 'random':
-            # if run type is random, set action to string random
-            action = 'random'
-        else:
-            # otherwise call the q learner to get the action and increment the step
-            self.q_learner.step = self.q_learner.step + 1
-            action = self.q_learner.get_action(self.state)
+
+        # call the q learner to get the action and increment the step
+        self.q_learner.step = self.q_learner.step + 1
+        action = self.q_learner.get_action(self.state)
             
         if action == 'random':
             # run type is random or qtable returned random choice, so choose random 
@@ -197,7 +201,7 @@ class LearningAgent(Agent):
             
         # Execute action and get reward
         reward = self.env.act(self, action)
-
+        
         # TODO: Learn policy based on state, action, reward
 
         # learn one step in arrears - assuming not a random run
@@ -214,10 +218,10 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 100
+    dbg_trials = 10
     
     # create switches to run as random, way_light, way_light_vehicles
-    dbg_runtype = 'random'
+    dbg_runtype = 'way_light_only'
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
