@@ -13,7 +13,7 @@ class QLearner(object):
     def __init__(self):
         # initialise learning parameters
         self.learning_rate = 1
-        self.discount_rate = 0.5
+        self.discount_rate = 0.2
         self.epsilon = 1
         
         # initialise q table and state, action, reward trackers
@@ -34,9 +34,9 @@ class QLearner(object):
     def reset(self,t):
         # update results table
         if (self.results_table == None):
-            self.results_table = [[self.trial,t,self.previous_reward,self.negative_rewards]]
+            self.results_table = [[self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards]]
         else:
-            self.results_table.append([self.trial,t,self.previous_reward,self.negative_rewards])
+            self.results_table.append([self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards])
 
         self.trial = self.trial + 1
         
@@ -218,7 +218,7 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 10
+    dbg_trials = 100
     
     # create switches to run as random, way_light, way_light_vehicles
     dbg_runtype = 'way_light_only'
@@ -242,9 +242,14 @@ def run():
     
     out_array = np.array(a.q_learner.results_table)   
     print np.size(out_array[np.where(out_array[:,2] > 3)],0)
-    y = out_array[:,3]
+    a = out_array[:,4]
+    b = out_array[:,3]
+    c = out_array[:,1]
     x = out_array[:,0]
-    plt.plot(x,y)
+    plt.plot(x, a, label='Net Trial Reward')
+    plt.plot(x, b, label='Negative Reward Count')
+    plt.plot(x, c, label='Trial Steps')
+    plt.legend()
     plt.show()
 
 if __name__ == '__main__':
