@@ -13,7 +13,7 @@ class QLearner(object):
     def __init__(self):
         # initialise learning parameters
         self.learning_rate = 1
-        self.discount_rate = 0.2
+        self.discount_rate = 0.50
         self.epsilon = 1
         
         # initialise q table and state, action, reward trackers
@@ -112,6 +112,33 @@ class QLearner(object):
             # pick random triggered by epsilon
             return 'random'
         
+    def show_results(self):
+        # show Q Table
+        print self.q_table
+        
+        # make results array into np array (check why have to do this again)
+        out_array = np.array(self.results_table)   
+        
+        # print the number of successes, trials, percent success, total steps, total reward
+        t_success = np.size(out_array[np.where(out_array[:,2] > 3)],0)
+        t_trials = np.size(out_array[:,2])
+        t_success_percent = (t_success * 1.0) / t_trials
+        t_average_steps = np.average(out_array[:,1]) 
+        t_average_neg_reward = np.average(out_array[:,3]) 
+        print "Results: successes = {}, trials = {}, success_percent = {}, \
+            average steps = {}, average_neg_reward_count = {}".format(t_success, t_trials, 
+                   t_success_percent, t_average_steps, t_average_neg_reward)
+        
+        # build x and y axes for graph output and show graph       
+        a = out_array[:,4]
+        b = out_array[:,3]
+        c = out_array[:,1]
+        x = out_array[:,0]
+        plt.plot(x, a, label='Net Trial Reward')
+        plt.plot(x, b, label='Negative Reward Count')
+        plt.plot(x, c, label='Trial Steps')
+        plt.legend()
+        plt.show()
         
 
 class LearningAgent(Agent):
@@ -218,9 +245,13 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 100
+    dbg_trials = 100    
     
     # create switches to run as random, way_light, way_light_vehicles
+    # random = take random actions only
+    # way_light_only = Traffic Light, Way Point
+    # way_light_Vehicle = Traffic Light, Way Point, Left, Right, Oncoming
+    # way_light_modified (or any other value) = Way Point, Combination Light and Vehicle State
     dbg_runtype = 'way_light_only'
 
     # Set up environment and agent
@@ -238,19 +269,9 @@ def run():
     sim.run(n_trials=dbg_trials)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
-    print a.q_learner.q_table
+    # at the end of the simulation show results
+    a.q_learner.show_results()
     
-    out_array = np.array(a.q_learner.results_table)   
-    print np.size(out_array[np.where(out_array[:,2] > 3)],0)
-    a = out_array[:,4]
-    b = out_array[:,3]
-    c = out_array[:,1]
-    x = out_array[:,0]
-    plt.plot(x, a, label='Net Trial Reward')
-    plt.plot(x, b, label='Negative Reward Count')
-    plt.plot(x, c, label='Trial Steps')
-    plt.legend()
-    plt.show()
 
 if __name__ == '__main__':
     run()
