@@ -13,7 +13,7 @@ class QLearner(object):
     def __init__(self):
         # initialise learning parameters
         self.learning_rate = 1
-        self.discount_rate = 0.50
+        self.discount_rate = 0.95
         self.epsilon = 1
         
         # initialise q table and state, action, reward trackers
@@ -30,15 +30,21 @@ class QLearner(object):
         self.results_table = None
         self.negative_rewards = 0
         self.net_rewards = 0
+        
+        # check first reset
+        self.reset_check = False
     
     def reset(self,t):
-        # update results table
-        if (self.results_table == None):
-            self.results_table = [[self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards]]
-        else:
-            self.results_table.append([self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards])
+        if (self.reset_check):
+            # update results table
+            if (self.results_table == None):
+                self.results_table = [[self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards]]
+            else:
+                self.results_table.append([self.trial,t,self.previous_reward,self.negative_rewards,self.net_rewards])
 
         self.trial = self.trial + 1
+        
+        self.reset_check = True
         
         # reset negative and net rewards counter
         self.negative_rewards = 0
@@ -91,7 +97,7 @@ class QLearner(object):
         # if random action, choose random else choose best
     
         # update epsilon
-        self.epsilon = 1.0 / self.trial
+        self.epsilon = 1.0 / self.step
         
         if (random.random() > self.epsilon or state == None):
             # pick best
@@ -126,7 +132,7 @@ class QLearner(object):
         t_average_steps = np.average(out_array[:,1]) 
         t_average_neg_reward = np.average(out_array[:,3]) 
         print "Results: successes = {}, trials = {}, success_percent = {}, \
-            average steps = {}, average_neg_reward_count = {}".format(t_success, t_trials, 
+                 average steps = {}, average_neg_reward_count = {}".format(t_success, t_trials, 
                    t_success_percent, t_average_steps, t_average_neg_reward)
         
         # build x and y axes for graph output and show graph       
@@ -245,7 +251,7 @@ def run():
     dbg_deadline = True
     dbg_update_delay = 0.01
     dbg_display = False
-    dbg_trials = 100    
+    dbg_trials = 100 
     
     # create switches to run as random, way_light, way_light_vehicles
     # random = take random actions only
@@ -270,6 +276,8 @@ def run():
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
     # at the end of the simulation show results
+    # call qlearner reset to get last trial result
+    a.q_learner.reset(a.step_count)
     a.q_learner.show_results()
     
 
